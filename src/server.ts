@@ -68,12 +68,10 @@ app.post<{}, {}, INewDBItem>("/rec", async (req, res): Promise<void> => {
     await client.query("SELECT * FROM recommendations WHERE link = $1", [link])
   ).rowCount;
   if (linkUniquenesCheck > 0) {
-    res
-      .status(400)
-      .json({
-        status: "failure",
-        data: "that link is already taken in the database",
-      });
+    res.status(400).json({
+      status: "failure",
+      data: "that link is already taken in the database",
+    });
   } else if (
     typeof title === "string" &&
     typeof type === "string" &&
@@ -130,12 +128,10 @@ app.put<{ id: string }, {}, INewDBItem>(
       linkUniquenesCheck.rowCount > 0 &&
       linkUniquenesCheck.rows[0].id !== id
     ) {
-      res
-        .status(400)
-        .json({
-          status: "failure",
-          data: "that link is already taken in the database",
-        });
+      res.status(400).json({
+        status: "failure",
+        data: "that link is already taken in the database",
+      });
     } else {
       if (
         !(
