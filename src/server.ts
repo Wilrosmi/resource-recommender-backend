@@ -27,8 +27,9 @@ const PORT_NUMBER = process.env.PORT ?? 4000;
 app.get("/rec", async (req, res): Promise<void> => {
   const client = new Client({ database: "recResourcesDB" });
   await client.connect();
-  const responseData = (await client.query("SELECT * FROM recommendations ORDER BY likes DESC;"))
-    .rows;
+  const responseData = (
+    await client.query("SELECT * FROM recommendations ORDER BY likes DESC;")
+  ).rows;
   res.status(200).json({
     status: "success",
     data: responseData,
@@ -74,7 +75,7 @@ app.post<{}, {}, INewDBItem>("/rec", async (req, res): Promise<void> => {
   } else if (
     typeof description === "string" &&
     typeof type === "string" &&
-    typeof link === "string" && 
+    typeof link === "string" &&
     typeof likes === "number"
   ) {
     const values = [description, type, link, likes];
