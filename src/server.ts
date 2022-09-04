@@ -4,10 +4,10 @@ import dotenv from "dotenv";
 import { Client } from "pg";
 
 interface INewDBItem {
-  title: string;
+  description: string;
   link: string;
   type: string;
-  message?: string;
+  likes: number;
 }
 
 const app = express();
@@ -27,7 +27,7 @@ const PORT_NUMBER = process.env.PORT ?? 4000;
 app.get("/rec", async (req, res): Promise<void> => {
   const client = new Client({ database: "recResourcesDB" });
   await client.connect();
-  const responseData = (await client.query("SELECT * FROM recommendations;"))
+  const responseData = (await client.query("SELECT * FROM recommendations ORDER BY likes DESC;"))
     .rows;
   res.status(200).json({
     status: "success",
@@ -62,8 +62,7 @@ app.get<{ id: string }>("/rec/:id", async (req, res): Promise<void> => {
 app.post<{}, {}, INewDBItem>("/rec", async (req, res): Promise<void> => {
   const client = new Client({ database: "recResourcesDB" });
   await client.connect();
-  const { title, type, link, message } = req.body;
-  console.log(typeof title, typeof type, typeof link, typeof message);
+  const { description, type, link, likes } = req.body;
   const linkUniquenesCheck = (
     await client.query("SELECT * FROM recommendations WHERE link = $1", [link])
   ).rowCount;
@@ -73,14 +72,14 @@ app.post<{}, {}, INewDBItem>("/rec", async (req, res): Promise<void> => {
       data: "that link is already taken in the database",
     });
   } else if (
-    typeof title === "string" &&
+    typeof description === "string" &&
     typeof type === "string" &&
-    typeof link === "string" &&
-    (typeof message === "string" || message === undefined)
+    typeof link === "string" && 
+    typeof likes === "number"
   ) {
-    const values = [title, type, link, message];
+    const values = [description, type, link, likes];
     const responseData = await client.query(
-      "INSERT INTO recommendations (title, type, link, message) VALUES ($1, $2, $3, $4);",
+      "INSERT INTO recommendations (description, type, link, likes) VALUES ($1, $2, $3, $4);",
       values
     );
     res.status(201).json({
@@ -119,7 +118,7 @@ app.put<{ id: string }, {}, INewDBItem>(
     const client = new Client({ database: "recResourcesDB" });
     await client.connect();
     const id = parseInt(req.params.id);
-    const { title, type, link, message } = req.body;
+    const { description, type, link, likes } = req.body;
     const linkUniquenesCheck = await client.query(
       "SELECT * FROM recommendations WHERE link = $1",
       [link]
@@ -135,17 +134,17 @@ app.put<{ id: string }, {}, INewDBItem>(
     } else {
       if (
         !(
-          typeof title === "string" &&
+          typeof description === "string" &&
           typeof type === "string" &&
           typeof link === "string" &&
-          (typeof message === "string" || message === undefined)
+          typeof likes === "number"
         )
       ) {
         res.status(400).json({ status: "failure", data: "invalid input" });
       } else {
         const responseData = await client.query(
-          "UPDATE recommendations SET title = $1, link = $2, type = $3, message = $4 WHERE id = $5",
-          [title, link, type, message, id]
+          "UPDATE recommendations SET description = $1, link = $2, type = $3, likes= $4 WHERE id = $5",
+          [description, link, type, likes, id]
         );
         if (responseData.rowCount > 0) {
           res
