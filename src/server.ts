@@ -23,9 +23,16 @@ dotenv.config();
 // use the environment variable PORT, or 4000 as a fallback
 const PORT_NUMBER = process.env.PORT ?? 4000;
 
+const dbConfig = {
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+};
+
 // Serve all items in db
 app.get("/rec", async (req, res): Promise<void> => {
-  const client = new Client({ database: "recResourcesDB" });
+  const client = new Client(dbConfig);
   await client.connect();
   const responseData = (
     await client.query("SELECT * FROM recommendations ORDER BY likes DESC;")
@@ -39,7 +46,7 @@ app.get("/rec", async (req, res): Promise<void> => {
 
 // Serve a particular item in db
 app.get<{ id: string }>("/rec/:id", async (req, res): Promise<void> => {
-  const client = new Client({ database: "recResourcesDB" });
+  const client = new Client(dbConfig);
   await client.connect();
   const id = parseInt(req.params.id);
   const responseData = (
@@ -61,7 +68,7 @@ app.get<{ id: string }>("/rec/:id", async (req, res): Promise<void> => {
 
 // Create a new item in the db
 app.post<{}, {}, INewDBItem>("/rec", async (req, res): Promise<void> => {
-  const client = new Client({ database: "recResourcesDB" });
+  const client = new Client(dbConfig);
   await client.connect();
   const { description, type, link, likes } = req.body;
   const linkUniquenesCheck = (
@@ -98,7 +105,7 @@ app.post<{}, {}, INewDBItem>("/rec", async (req, res): Promise<void> => {
 
 //Deletes an item from the database based on id
 app.delete<{ id: string }>("/rec/:id", async (req, res): Promise<void> => {
-  const client = new Client({ database: "recResourcesDB" });
+  const client = new Client(dbConfig);
   await client.connect();
   const id = parseInt(req.params.id);
   const responseData = await client.query(
@@ -116,7 +123,7 @@ app.delete<{ id: string }>("/rec/:id", async (req, res): Promise<void> => {
 app.put<{ id: string }, {}, INewDBItem>(
   "/rec/:id",
   async (req, res): Promise<void> => {
-    const client = new Client({ database: "recResourcesDB" });
+    const client = new Client(dbConfig);
     await client.connect();
     const id = parseInt(req.params.id);
     const { description, type, link, likes } = req.body;
